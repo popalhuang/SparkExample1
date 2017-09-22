@@ -57,7 +57,7 @@ public class Example3 {
 		 * join type:
 		 * 		inner/full/outer/left/leftouter/leftsemi/right/rightouter
 		 */
-		System.out.println("left join");
+		System.out.println("left join:::");
 		Dataset<Row> result_3 = ds_employee.join(ds_employeedep,ds_employee.col("eid").equalTo(ds_employeedep.col("eid")),"left");
 		result_3.show();
 		
