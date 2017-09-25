@@ -12,6 +12,15 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.functions;
+
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.count;
+import static org.apache.spark.sql.functions.avg;
+import static org.apache.spark.sql.functions.sum;
+import static org.apache.spark.sql.functions.min;
+import static org.apache.spark.sql.functions.max;
+import static org.apache.spark.sql.functions.floor;
 import static org.apache.spark.sql.functions.lit;
 
 
@@ -64,8 +73,8 @@ public class Example3 {
 	public static class Employee implements Serializable {
 		public String eid="";		
 		public String jobTitle="";
-		public String salary="";		
-		public Employee(String eid,String jobTitle,String salary){
+		public int salary=0;		
+		public Employee(String eid,String jobTitle,int salary){
 			this.eid=eid;
 			this.jobTitle=jobTitle;
 			this.salary=salary;
@@ -79,10 +88,10 @@ public class Example3 {
 			this.jobTitle = jobTitle;
 		}
 
-		public String getSalary() {
+		public int getSalary() {
 			return salary;
 		}
-		public void setSalary(String salary) {
+		public void setSalary(int salary) {
 			this.salary = salary;
 		}
 		public String getEid() {
@@ -101,18 +110,20 @@ public class Example3 {
 		spark.sparkContext().setLogLevel("ERROR");
 		
 		List<Employee> employees = Arrays.asList(
-				new Employee("001","engineer","10000"),
-				new Employee("002","engineer","30000"),
-				new Employee("003","director","50000"),				
-				new Employee("004","manager ","70000"),
-				new Employee("005","chairman","90000")
+				new Employee("001","engineer",10000),
+				new Employee("002","engineer",30000),
+				new Employee("003","director",50000),				
+				new Employee("004","manager ",70000),
+				new Employee("005","chairman",90000),
+				new Employee("007","chairman",100000)
 		);
 		List<EmployeeDep> employeesdep = Arrays.asList(
 				new EmployeeDep("001","Tom","F",20,Arrays.asList("aaa","bbb")),
 				new EmployeeDep("003","Kevin","F",38,Arrays.asList("ccc","ddd")),
 				new EmployeeDep("004","Ted","F",30,Arrays.asList("eee","fff")),
 				new EmployeeDep("005","Amy","M",40,Arrays.asList("ggg","hhh")),
-				new EmployeeDep("006","Iran","M",40,Arrays.asList("iii","jjj"))
+				new EmployeeDep("006","Iran","M",40,Arrays.asList("iii","jjj")),
+				new EmployeeDep("007","Eric","F",40,Arrays.asList("kkk","lll"))
 		);
 		
 		Dataset<Row> ds_employee = spark.createDataFrame(employees, Employee.class);		
@@ -120,6 +131,50 @@ public class Example3 {
 		
 		Dataset<Row> ds_employeedep = spark.createDataFrame(employeesdep, EmployeeDep.class);		
 		ds_employeedep.show();
+				
+		
+		//example1(ds_employee,ds_employeedep);
+		example2(ds_employee,ds_employeedep);
+		//example3(ds_employee,ds_employeedep);
+		
+										
+	}
+	
+	public static void example1(Dataset ds_employee,Dataset ds_employeedep ){
+		Dataset<Row> result = ds_employeedep.select(col("name"),col("age"),col("age").geq(35),col("age").equalTo(35),col("age").leq(35),col("age").$eq$bang$eq(35));
+		result.show();
+		
+		result = ds_employeedep.select(col("name"),col("age"),col("age").between(30, 46));
+		result.show();
+		
+		System.out.println("age>=30 and age <=40 and name like '%ra%'");
+		result = ds_employeedep.where(col("age").geq(30).and(col("age").leq(40).and(col("name").like("%ra%"))));
+		result.show();
+		
+		result = ds_employeedep.groupBy(ds_employeedep.col("age")).agg(count("age"));
+		result.show();
+		
+		result = ds_employeedep.agg(sum("age"),count("age"),avg("age"),max("age"),min("age"));		
+		result.show();
+		
+		result = ds_employee.join(ds_employeedep,ds_employee.col("eid").equalTo(ds_employeedep.col("eid")));
+		result.show();
+		
+		result = ds_employee.join(ds_employeedep,ds_employee.col("eid").equalTo(ds_employeedep.col("eid"))).drop(ds_employeedep.col("eid"));
+		result.show();
+		
+		result = ds_employee.join(ds_employeedep,ds_employee.col("eid").equalTo(ds_employeedep.col("eid")))				 
+				 .groupBy("age").agg(count("age"),sum("salary"),max("salary"),min("salary"));
+		result.show();											
+	}
+	
+	public static void example2(Dataset ds_employee,Dataset ds_employeedep ){
+		Dataset<Row> result = ds_employee.withColumn("test_c1",floor("salary"));
+		result.show();
+	}
+	
+	//以下為Dataset join範例
+	public static void example3(Dataset ds_employee,Dataset ds_employeedep ){
 		
 		System.out.println("Non key join:");
 		Dataset<Row> result_1 = ds_employee.join(ds_employeedep);
@@ -170,24 +225,5 @@ public class Example3 {
 		result_5.printSchema();
 		
 		result_5.write().mode(SaveMode.Overwrite).saveAsTable("empresult");
-		
-		
-		
-		/*ds.select(ds.col("name"),ds.col("age"),ds.col("gender"),ds.col("salary")).where("age>15").show();		
-		Dataset<Row> ds2 = spark.createDataFrame(jsc.parallelize(employees), Employee.class);
-		ds2.printSchema();
-		ds2.show();
-		ds2.createTempView("tmp_employee");
-						
-		System.out.println("----select * from tmp_employee----");
-		spark.sql("select * from tmp_employee").show();
-						
-		ds2 = ds2.select(ds2.col("name"),ds2.col("age"),ds2.col("gender"),ds2.col("salary"));
-		Dataset<Row> ds3 = ds2.withColumn("uuid", lit("12345677"));			
-		ds3.show();*/
-		
-		//spark.createDataFrame(ds2.rdd(), Employee.class).write().saveAsTable("emp");
-		//ds3.write().mode(SaveMode.Overwrite).saveAsTable("emp1");	//Table不存在時使用,使用Overwrite可以直接取代Table
-		//ds3.write().mode(SaveMode.Append).insertInto("emp1");	
-	}	
+	}
 }
