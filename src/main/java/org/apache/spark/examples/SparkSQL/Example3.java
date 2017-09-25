@@ -1,9 +1,10 @@
 package org.apache.spark.examples.SparkSQL;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
+
 
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.AnalysisException;
@@ -11,13 +12,88 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.examples.model.Employee;
-import org.apache.spark.examples.model.EmployeeDep;
-
 import static org.apache.spark.sql.functions.lit;
 
 
 public class Example3 {
+	public static class EmployeeDep implements Serializable{
+		private String eid="";
+		private String name="";
+		private String gender="F";
+		private int age=0;
+		private List<String> relative = new ArrayList<String>();
+		public EmployeeDep(String eid,String name,String gender,int age,List<String> relative){
+			this.eid=eid;
+			this.name=name;
+			this.gender=gender;
+			this.age=age;
+			this.relative=relative;
+		}
+		public String getEid() {
+			return eid;
+		}
+		public void setEid(String eid) {
+			this.eid = eid;
+		}
+		public String getName() {
+			return name;
+		}
+		public void setName(String name) {
+			this.name = name;
+		}
+		public String getGender() {
+			return gender;
+		}
+		public void setGender(String gender) {
+			this.gender = gender;
+		}
+		public int getAge() {
+			return age;
+		}
+		public void setAge(int age) {
+			this.age = age;
+		}
+		public List<String> getRelative() {
+			return relative;
+		}
+		public void setRelative(List<String> relative) {
+			this.relative = relative;
+		}
+		
+	}
+	public static class Employee implements Serializable {
+		public String eid="";		
+		public String jobTitle="";
+		public String salary="";		
+		public Employee(String eid,String jobTitle,String salary){
+			this.eid=eid;
+			this.jobTitle=jobTitle;
+			this.salary=salary;
+		}
+			
+		public String getJobTitle() {
+			return jobTitle;
+		}
+
+		public void setJobTitle(String jobTitle) {
+			this.jobTitle = jobTitle;
+		}
+
+		public String getSalary() {
+			return salary;
+		}
+		public void setSalary(String salary) {
+			this.salary = salary;
+		}
+		public String getEid() {
+			return eid;
+		}
+		public void setEid(String eid) {
+			this.eid = eid;
+		}
+		
+		
+	}
 	public static void  main(String[] args) throws AnalysisException{
 		
 		SparkSession spark = SparkSession.builder().appName("SparkSQL.Example3").enableHiveSupport().getOrCreate();
@@ -113,7 +189,5 @@ public class Example3 {
 		//spark.createDataFrame(ds2.rdd(), Employee.class).write().saveAsTable("emp");
 		//ds3.write().mode(SaveMode.Overwrite).saveAsTable("emp1");	//Table不存在時使用,使用Overwrite可以直接取代Table
 		//ds3.write().mode(SaveMode.Append).insertInto("emp1");	
-	}
-	
-	
+	}	
 }
