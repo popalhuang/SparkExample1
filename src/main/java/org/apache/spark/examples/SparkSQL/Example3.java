@@ -159,46 +159,165 @@ public class Example3 {
 		
 		Dataset<Row> ds_employeedep = spark.createDataFrame(employeesdep, EmployeeDep.class);		
 		ds_employeedep.show();
-		
+		/*  result:
+		 	+---+---+------+-----+----------+
+			|age|eid|gender| name|  relative|
+			+---+---+------+-----+----------+
+			| 20|001|     F|  Tom|[aaa, bbb]|
+			| 38|003|     F|Kevin|[ccc, ddd]|
+			| 30|004|     F|  Ted|[eee, fff]|
+			| 40|005|     M|  Amy|[ggg, hhh]|
+			| 40|006|     M| Iran|[iii, jjj]|
+			| 40|007|     F| Eric|[kkk, lll]|
+			+---+---+------+-----+----------+
+		 */
 		
 		//Create DataFrame Example
 		//1.List<T> --> DataFrame
 		Dataset<Row> df1 = spark.createDataFrame(employees, Employee.class);		
 		df1.show();
+		/*  result:
+		  	+---+--------+------+
+			|eid|jobTitle|salary|
+			+---+--------+------+
+			|001|engineer| 10000|
+			|002|engineer| 30000|
+			|003|director| 50000|
+			|004|manager | 70000|
+			|005|chairman| 90000|
+			|007|chairman|100000|
+			+---+--------+------+
+
+		 */
 		
 		//2.JavaRDD --> DataFrame
 		Dataset<Row> df2 = spark.createDataFrame(jrdd,Employee.class);
 		df2.show();
+		/*  result:
+		 	+---+--------+------+
+			|eid|jobTitle|salary|
+			+---+--------+------+
+			|001|engineer| 10000|
+			|002|engineer| 30000|
+			|003|director| 50000|
+			|004|manager | 70000|
+			|005|chairman| 90000|
+			|007|chairman|100000|
+			+---+--------+------+ 
+		 */
 		
 		//3.RDD --> DataFrame
 		Dataset<Row> df3 = spark.createDataFrame(rdd1,Employee.class);
 		df3.show();
-		
+		/*  result:
+		 	+---+--------+------+
+			|eid|jobTitle|salary|
+			+---+--------+------+
+			|001|engineer| 10000|
+			|002|engineer| 30000|
+			|003|director| 50000|
+			|004|manager | 70000|
+			|005|chairman| 90000|
+			|007|chairman|100000|
+			+---+--------+------+ 
+		 */
 	
 		//Create Dataset Example
 		//1. List<T> --> Dataset
 		Dataset<Employee> ds1 = spark.createDataset(employees,Encoders.bean(Employee.class));
 		ds1.show();
+		/*  result:
+		 	+---+--------+------+
+			|eid|jobTitle|salary|
+			+---+--------+------+
+			|001|engineer| 10000|
+			|002|engineer| 30000|
+			|003|director| 50000|
+			|004|manager | 70000|
+			|005|chairman| 90000|
+			|007|chairman|100000|
+			+---+--------+------+ 
+		*/
 		
 		//2. RDD<T> --> Dataset		
 		Dataset<Employee> ds2 = spark.createDataset(rdd1, Encoders.bean(Employee.class));
 		ds2.show();
+		/*  result:
+		 	+---+--------+------+
+			|eid|jobTitle|salary|
+			+---+--------+------+
+			|001|engineer| 10000|
+			|002|engineer| 30000|
+			|003|director| 50000|
+			|004|manager | 70000|
+			|005|chairman| 90000|
+			|007|chairman|100000|
+			+---+--------+------+ 
+		 */
 		
 		//Create empty Dataset
 		Dataset<Employee> ds3 = spark.emptyDataset(Encoders.bean(Employee.class));
 		ds3.show();		
+		/*  result:
+		 	+---+--------+------+
+			|eid|jobTitle|salary|
+			+---+--------+------+
+			+---+--------+------+
+
+		*/
 		
 		//add a new column
 		Dataset<Row> ds4 = ds2.withColumn("test_c1", upper(lit("a")));
 		ds4.show();
+		/*	result:
+		  	+---+--------+------+-------+
+			|eid|jobTitle|salary|test_c1|
+			+---+--------+------+-------+
+			|001|engineer| 10000|      A|
+			|002|engineer| 30000|      A|
+			|003|director| 50000|      A|
+			|004|manager | 70000|      A|
+			|005|chairman| 90000|      A|
+			|007|chairman|100000|      A|
+			+---+--------+------+-------+
+		 */
+		
 		
 		//remove a column
 		ds4 = ds4.drop("eid");
 		ds4.show();
+		/* 	result:
+		  	+--------+------+-------+
+			|jobTitle|salary|test_c1|
+			+--------+------+-------+
+			|engineer| 10000|      A|
+			|engineer| 30000|      A|
+			|director| 50000|      A|
+			|manager | 70000|      A|
+			|chairman| 90000|      A|
+			|chairman|100000|      A|
+			+--------+------+-------+
+		 */
 		
 		//remove column for the same value
 		ds4=ds4.dropDuplicates("jobTitle");
 		ds4.show();
+		/* 	result:
+			+--------+------+-------+
+			|jobTitle|salary|test_c1|
+			+--------+------+-------+
+			|director| 50000|      A|
+			|manager | 70000|      A|
+			|engineer| 10000|      A|
+			|chairman| 90000|      A|
+			+--------+------+-------+
+		 */
+		
+		
+		
+		
+		
+		
 		/*spark.read().csv("");
 		spark.read().text("");
 		spark.read().textFile("");
