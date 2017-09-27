@@ -5,14 +5,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.functions;
+
+import com.cloudera.livy.shaded.apache.commons.codec.Encoder;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
@@ -22,6 +26,7 @@ import static org.apache.spark.sql.functions.min;
 import static org.apache.spark.sql.functions.max;
 import static org.apache.spark.sql.functions.floor;
 import static org.apache.spark.sql.functions.lit;
+import static org.apache.spark.sql.functions.upper;
 
 
 public class Example3 {
@@ -73,7 +78,11 @@ public class Example3 {
 	public static class Employee implements Serializable {
 		public String eid="";		
 		public String jobTitle="";
-		public int salary=0;		
+		public int salary=0;
+		
+		public Employee(){
+			
+		}
 		public Employee(String eid,String jobTitle,int salary){
 			this.eid=eid;
 			this.jobTitle=jobTitle;
@@ -126,15 +135,151 @@ public class Example3 {
 				new EmployeeDep("007","Eric","F",40,Arrays.asList("kkk","lll"))
 		);
 		
+		JavaRDD<Employee> jrdd = jsc.parallelize(employees);
+		RDD<Employee> rdd1 = jrdd.rdd();
+		RDD<Employee> rdd2 = jrdd.toRDD(jrdd);
+		
+		
+		
+		
 		Dataset<Row> ds_employee = spark.createDataFrame(employees, Employee.class);		
 		ds_employee.show();
+		/*  result:
+		  	+---+--------+------+
+			|eid|jobTitle|salary|
+			+---+--------+------+
+			|001|engineer| 10000|
+			|002|engineer| 30000|
+			|003|director| 50000|
+			|004|manager | 70000|
+			|005|chairman| 90000|
+			|007|chairman|100000|
+			+---+--------+------+
+		*/
 		
 		Dataset<Row> ds_employeedep = spark.createDataFrame(employeesdep, EmployeeDep.class);		
 		ds_employeedep.show();
-				
+		
+		
+		//Create DataFrame Example
+		//1.List<T> --> DataFrame
+		Dataset<Row> df1 = spark.createDataFrame(employees, Employee.class);		
+		df1.show();
+		
+		//2.JavaRDD --> DataFrame
+		Dataset<Row> df2 = spark.createDataFrame(jrdd,Employee.class);
+		df2.show();
+		
+		//3.RDD --> DataFrame
+		Dataset<Row> df3 = spark.createDataFrame(rdd1,Employee.class);
+		df3.show();
+		
+	
+		//Create Dataset Example
+		//1. List<T> --> Dataset
+		Dataset<Employee> ds1 = spark.createDataset(employees,Encoders.bean(Employee.class));
+		ds1.show();
+		
+		//2. RDD<T> --> Dataset		
+		Dataset<Employee> ds2 = spark.createDataset(rdd1, Encoders.bean(Employee.class));
+		ds2.show();
+		
+		//Create empty Dataset
+		Dataset<Employee> ds3 = spark.emptyDataset(Encoders.bean(Employee.class));
+		ds3.show();		
+		
+		//add a new column
+		Dataset<Row> ds4 = ds2.withColumn("test_c1", upper(lit("a")));
+		ds4.show();
+		
+		//remove a column
+		ds4 = ds4.drop("eid");
+		ds4.show();
+		
+		//remove column for the same value
+		ds4=ds4.dropDuplicates("jobTitle");
+		ds4.show();
+		/*spark.read().csv("");
+		spark.read().text("");
+		spark.read().textFile("");
+		spark.read().jdbc(url, table, properties);
+		spark.read().orc("");
+		spark.read().parquet("");
+		spark.read().table("").select("").explain();
+		
+		
+		
+		ds3.createOrReplaceTempView(viewName);
+		ds3.createTempView(viewName);
+		
+		ds3.printSchema();
+		
+		ds3.take(n);
+		ds3.takeAsList(n);		
+		ds3.limit(n);
+		ds3.first();
+		ds3.show(n);
+		ds3.foreach(func);
+		ds3.foreachPartition(func);
+		
+		ds3.alias("");
+		ds3.as("");
+		
+		
+		ds3.select(cols);
+		ds3.selectExpr(exprs)
+		ds3.selectUntyped(columns)
+		ds3.where(condition);
+		ds3.sort(sortExprs);
+		ds3.groupBy(cols);
+		ds3.groupByKey(func, evidence$4);
+		ds3.orderBy(sortExprs);
+		ds3.join(right, usingColumns, joinType);
+		ds3.apply(colName);
+		ds3.filter(condition);
+		
+		ds3.agg(exprs);		
+		ds3.distinct();
+		ds3.count();
+		
+		ds3.unpersist();
+		ds3.cache();
+		
+		ds3.col("");
+		ds3.columns();
+		ds3.withColumn(colName, col)
+		ds3.drop("");
+		ds3.dropDuplicates("");
+		
+		
+		ds3.collectAsList();
+		ds3.collect();
+		ds3.toDF();
+		ds3.toJavaRDD();
+		ds3.toJSON();
+		ds3.toLocalIterator()
+		ds3.toPythonIterator()
+		ds3.javaToPython()
+		
+		ds3.map(func, evidence$7);
+		ds3.mapPartitions(func, evidence$8);
+		ds3.flatMap(f, encoder);
+		
+		ds3.isLocal();
+		ds3.isStreaming();
+		
+		ds3.write().csv(path);
+		ds3.write().orc("");
+		ds3.write().jdbc(url, table, connectionProperties);
+		ds3.write().json(path);
+		ds3.write().text(path);
+		ds3.write().parquet(path);
+		ds3.write().save();
+		ds3.write().saveAsTable("");
+		ds3.write().insertInto("");*/
 		
 		//example1(ds_employee,ds_employeedep);
-		example2(ds_employee,ds_employeedep);
+		//example2(ds_employee,ds_employeedep);
 		//example3(ds_employee,ds_employeedep);
 		
 										
